@@ -1,0 +1,137 @@
+extends Node
+
+
+var all_pieces = []
+var backup = []
+
+signal best_move
+
+func _ready():
+	for i in 9:
+		all_pieces.append([])
+		backup.append([])
+		for j in 9:
+			all_pieces[i].append(null)
+			backup[i].append(null)
+			
+
+
+func convert_to_numbers(grid):
+	for i in 9:
+		for j in 9:
+			match grid[i][j].color:
+				"black": all_pieces[i][j] = [15, false]
+				"blue" : all_pieces[i][j] = [0,false]
+				"green" : all_pieces[i][j] = [1,false]
+				"orange" : all_pieces[i][j] = [2,false]
+				"pink" : all_pieces[i][j] = [3,false]
+				"red" : all_pieces[i][j] = [4,false]
+				"white" : all_pieces[i][j] = [5,false]
+				"yellow" : all_pieces[i][j] = [6,false]
+
+
+func _on_grid_calculate_move(grid):
+	print ("CALCULATING BEST MOVE:")
+	convert_to_numbers(grid)
+	backup = all_pieces.duplicate()
+	var results = [0, 0, 0]
+	var highest = 0
+	var temp = 0
+	
+	for i in range(1,8):
+		push_down(i)
+		temp = find_matches()
+		if(temp > highest):
+			highest = temp
+			results = [0, i, highest]
+		all_pieces = backup.duplicate()
+
+		
+		push_right(i)
+		temp = find_matches()
+		if(temp > highest):
+			highest = temp
+			results = [1, i, highest]
+		all_pieces = backup.duplicate()
+		
+		push_up(i)
+		temp = find_matches()
+		if(temp > highest):
+			highest = temp
+			results = [2, i, highest]
+		all_pieces = backup.duplicate()
+		
+		push_left(i)
+		temp = find_matches()
+		if(temp > highest):
+			highest = temp
+			results = [3, i, highest]
+		all_pieces = backup.duplicate()
+		
+	emit_signal("best_move", results[0], results[1])
+
+func push_right(row):
+	
+	var temp_1 = all_pieces[0][row]
+	var temp_2 
+	
+	for i in range(0,7):
+		temp_2 = all_pieces[i + 1][row]
+		all_pieces[i + 1][row] = temp_1
+		temp_1 = temp_2 
+	
+func push_left(row):
+	var temp_1 = all_pieces[8][row]
+	var temp_2 
+	
+	for i in range(9, 1, -1):
+		temp_2 = all_pieces[i - 1][row]
+		all_pieces[i - 1][row] = temp_1
+		temp_1 = temp_2 
+	
+func push_up(col):
+	
+	var temp_1 = all_pieces[col][0]
+	var temp_2 
+	
+	for i in range(0, 8):
+		temp_2 = all_pieces[col][i + 1]
+		all_pieces[col][i + 1] = temp_1
+		temp_1 = temp_2 
+	
+func push_down(col):
+	
+	var temp_1 = all_pieces[col][8]
+	var temp_2 
+	
+	for i in range(9, 1, -1):
+		temp_2 = all_pieces[col][i - 1]
+		all_pieces[col][i - 1] = temp_1
+		temp_1 = temp_2 
+		
+func find_matches():
+	
+	var total = 0
+	for i in range(1, 7):
+		for j in range(1, 7):
+			if all_pieces[i][j] != null:
+				var current_color = all_pieces[i][j]
+				if i > 1 && i < 7:
+					if  all_pieces[i - 1][j] != null && all_pieces[i+1][j] != null:
+						if all_pieces[i - 1][j] == current_color && all_pieces[i + 1][j] == current_color:
+							all_pieces[i - 1][j][1] = true
+							all_pieces[i][j][1 ]= true
+							all_pieces[i + 1][j][1] = true
+				if j > 1 && j < 7:
+					if  all_pieces[i][j - 1] != null && all_pieces[i][j + 1] != null:
+						if all_pieces[i][j - 1] == current_color && all_pieces[i][j +1] == current_color:
+							all_pieces[i][j - 1][1] = true
+							all_pieces[i][j][1] = true
+							all_pieces[i][j + 1][1] = true
+	for i in range(1, 8):
+		for j in range(1, 8):
+			if all_pieces[i][j][1]:
+				
+				total += 1
+	return total
+	
